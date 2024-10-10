@@ -7,7 +7,7 @@ const path = require("path");
 const router = express.Router();
 const posts = require("../data/posts");
 
-const BASE_URL = "https://social-media-server-gray-omega.vercel.app/";
+const BASE_URL = "https://hasagram-server.vercel.app";
 
 // Setup multer for image uploads
 const storage = multer.diskStorage({
