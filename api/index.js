@@ -16,8 +16,8 @@ app.use("/comments", commentsRouter);
 app.use("/docs", documentationRouter);
 app.get("/", (req, res) => res.send("Express on Vercel"));
 
-const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+app.listen(3000, () => console.log("Server ready on port 3000."));
+
+module.exports = app;
