@@ -7,12 +7,12 @@ const path = require("path");
 const router = express.Router();
 const posts = require("../data/posts");
 
-const BASE_URL = "http://localhost:3000/";
+const BASE_URL = "https://social-media-server-gray-omega.vercel.app/";
 
 // Setup multer for image uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Directory to save uploaded images
+    cb(null, "api/uploads/"); // Directory to save uploaded images
   },
   filename: (req, file, cb) => {
     cb(null, `${uuidv4()}${path.extname(file.originalname)}`); // Unique file name
