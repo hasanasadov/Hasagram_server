@@ -85,46 +85,50 @@ router.get("/", (req, res) => {
 });
 
 // Create a new post with validation and image upload
-router.post(
-  "/",
-  upload.single("image"), // Handle single file upload
-  validatePost,
-  (req, res) => {
-    console.log("Received post creation request");
-    console.log("Request body:", req.body);
-    console.log("Uploaded file:", req.file);
+const cloudinary = require("cloudinary").v2;
 
+// Configure Cloudinary with your credentials
+cloudinary.config({
+  cloud_name: "dm8flxopb",
+  api_key: "395128971557429",
+  api_secret: "3bEb78X1-dr788kmc5XMY9dFvkw",
+});
+
+router.post("/", upload.single("image"), validatePost, async (req, res) => {
+  try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log("Validation errors:", errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
-    // Check if image is uploaded
     if (!req.file) {
-      console.log("No image uploaded");
       return res.status(400).json({ message: "Image is required" });
     }
 
+    // Upload the image to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path);
+
     const { title, content, tags = "" } = req.body;
-    const imagePath = req.file.path; // Get the image path
     const newPost = {
       id: uuidv4(),
       title,
       content,
       tags: tags.split(","),
       liked: false,
-      image: `${BASE_URL}${imagePath}`, // Store the image path in the post
+      image: result.secure_url, // Use the Cloudinary image URL
       comments: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    console.log("New post:", newPost);
     posts.push(newPost);
     res.status(201).json(newPost);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).json({ message: "Server error" });
   }
-);
+});
+
 
 
 router.get("/:id", (req, res) => {
