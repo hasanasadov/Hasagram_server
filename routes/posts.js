@@ -4,31 +4,22 @@ const { v4: uuidv4 } = require("uuid");
 const { body, validationResult } = require("express-validator");
 const multer = require("multer");
 const path = require("path");
-const aws = require("aws-sdk");
-const multerS3 = require("multer-s3");
 const router = express.Router();
 const posts = require("../data/posts");
 
-// Setup AWS S3
-const s3 = new aws.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
+const BASE_URL = "http://localhost:3000/";
+
+// Setup multer for image uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Directory to save uploaded images
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${uuidv4()}${path.extname(file.originalname)}`); // Unique file name
+  },
 });
 
-// Setup multer to use S3 for image uploads
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: "your-s3-bucket-name", // Replace with your actual S3 bucket name
-    metadata: (req, file, cb) => {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: (req, file, cb) => {
-      cb(null, `${uuidv4()}${path.extname(file.originalname)}`); // Generate a unique filename
-    },
-  }),
-});
+const upload = multer({ storage });
 
 // Validation middleware for post creation and editing
 const validatePost = [
@@ -94,7 +85,6 @@ router.get("/", (req, res) => {
 });
 
 // Create a new post with validation and image upload
-// Create a new post with validation and image upload
 router.post(
   "/",
   upload.single("image"), // Handle single file upload
@@ -111,34 +101,23 @@ router.post(
     }
 
     const { title, content, tags = "" } = req.body;
-    
-    // Check if req.file.location exists
-    if (!req.file.location) {
-      return res.status(500).json({ message: "Error uploading image to S3" });
-    }
-    
-    const imageLocation = req.file.location; // Get the S3 file URL
-    console.log("Uploaded Image URL: ", imageLocation); // Debugging log
-
+    const imagePath = req.file.path; // Get the image path
     const newPost = {
       id: uuidv4(),
       title,
       content,
       tags: tags.split(","),
       liked: false,
-      image: imageLocation, // Store the S3 image URL in the post
+      image: `${BASE_URL}${imagePath}`, // Store the image path in the post
       comments: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
-    // Save new post and respond
     posts.push(newPost);
     res.status(201).json(newPost);
   }
 );
 
-// Get a post by ID
 router.get("/:id", (req, res) => {
   const { id } = req.params; // Get the post id from route parameters
   const post = posts.find((p) => p.id === id); // Find the post by id
@@ -171,7 +150,7 @@ router.put(
     post.updatedAt = new Date();
 
     if (req.file) {
-      post.image = req.file.location; // Update image if a new one is uploaded
+      post.image = `${BASE_URL}${req.file.path}`; // Update image if a new one is uploaded
     }
 
     res.json(post);
@@ -197,7 +176,6 @@ router.post("/:id/like", (req, res) => {
   res.json({ liked: post.liked });
 });
 
-// Dislike a post
 router.post("/:id/dislike", (req, res) => {
   const post = posts.find((p) => p.id === req.params.id);
   if (!post) return res.status(404).json({ message: "Post not found" });
