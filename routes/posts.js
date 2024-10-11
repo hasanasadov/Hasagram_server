@@ -94,6 +94,7 @@ router.get("/", (req, res) => {
 });
 
 // Create a new post with validation and image upload
+// Create a new post with validation and image upload
 router.post(
   "/",
   upload.single("image"), // Handle single file upload
@@ -110,7 +111,14 @@ router.post(
     }
 
     const { title, content, tags = "" } = req.body;
+    
+    // Check if req.file.location exists
+    if (!req.file.location) {
+      return res.status(500).json({ message: "Error uploading image to S3" });
+    }
+    
     const imageLocation = req.file.location; // Get the S3 file URL
+    console.log("Uploaded Image URL: ", imageLocation); // Debugging log
 
     const newPost = {
       id: uuidv4(),
@@ -123,6 +131,8 @@ router.post(
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    
+    // Save new post and respond
     posts.push(newPost);
     res.status(201).json(newPost);
   }
