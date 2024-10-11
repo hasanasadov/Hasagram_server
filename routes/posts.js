@@ -90,13 +90,19 @@ router.post(
   upload.single("image"), // Handle single file upload
   validatePost,
   (req, res) => {
+    console.log("Received post creation request");
+    console.log("Request body:", req.body);
+    console.log("Uploaded file:", req.file);
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log("Validation errors:", errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     // Check if image is uploaded
     if (!req.file) {
+      console.log("No image uploaded");
       return res.status(400).json({ message: "Image is required" });
     }
 
@@ -113,10 +119,13 @@ router.post(
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
+    console.log("New post:", newPost);
     posts.push(newPost);
     res.status(201).json(newPost);
   }
 );
+
 
 router.get("/:id", (req, res) => {
   const { id } = req.params; // Get the post id from route parameters
